@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Texas Hold'em</title>
+  <style>
+    body { font-family: Arial; margin: 20px; background: #2e2e2e; color: #fff; }
+    h1, h2 { color: #ffd700; }
+    .card-select { display: inline-block; margin: 5px; }
+    .card-img { height: 60px; vertical-align: middle; }
+    .player { margin-bottom: 10px; background: #444; padding: 10px; border-radius: 8px; }
+    .player-name[contenteditable] { font-weight: bold; color: #00ffff; cursor: text; }
+    #result { margin-top: 20px; font-size: 20px; color: #0f0; }
+    #table { margin-top: 20px; border-collapse: collapse; width: 100%; }
+    #table th, #table td { border: 1px solid #888; padding: 8px; text-align: center; }
+    #instructions { background: #222; padding: 10px; border-radius: 6px; margin-top: 20px; display: none; }
+    select { padding: 5px; font-size: 16px; }
+    button { padding: 8px 16px; font-size: 16px; margin: 10px 5px; border: none; border-radius: 6px; background: #ffd700; color: #000; cursor: pointer; }
+    button:hover { background: #ffea00; }
+  </style>
+</head>
+<body>
+  <h1>Texas Hold'em Poker</h1>
+
+  <h2>Karty wspólne</h2>
+  <div id="community-cards"></div>
+  <button onclick="addCommunityCard()">+ Dodaj kartę wspólną</button>
+
+  <h2>Gracze</h2>
+  <div id="players"></div>
+  <button onclick="addPlayer()">+ Dodaj gracza</button>
+  <button onclick="resetCards()">Resetuj karty</button>
+  <button onclick="checkWinner()">Sprawdź zwycięzcę</button>
+  <h2>Wyniki rozdań</h2>
+  <table id="table">
+    <thead>
+      <tr><th>Gracz</th><th>Zwycięstwa</th></tr>
+    </thead>
+    <tbody id="score-table"></tbody>
+  </table>
+  <button onclick="confirmResetTable()">Resetuj tabelę wyników</button>
+
+  <div id="result"></div>
+
+  <h2 onclick="toggleInstructions()" style="cursor:pointer;">+ Pokaż/Zwiń zasady gry</h2>
+  <div id="instructions">
+    <p><strong>Układy pokerowe (od najlepszego):</strong></p>
+    <ol>
+      <li>Royal Flush (strit do Asa w tym samym kolorze)</li>
+      <li>Strit Flush</li>
+      <li>Kareta</li>
+      <li>Full House</li>
+      <li>Kolor</li>
+      <li>Strit</li>
+      <li>Trójka</li>
+      <li>Dwie pary</li>
+      <li>Para</li>
+      <li>Wysoka karta</li>
+    </ol>
+    <p>Podaj 5 kart wspólnych + 2 karty każdego gracza.<br>
+    Po kliknięciu "Sprawdź zwycięzcę" wyłoniony zostanie najlepszy układ pokerowy.</p>
+  </div>
+  <script>
+let playerCount = 0;
+const maxCommunityCards = 5;
+const suits = ["h", "d", "c", "s"];
+const values = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+const suitSymbols = { h: "♥", d: "♦", c: "♣", s: "♠" };
+const suitColors = { h: "red", d: "red", c: "black", s: "black" };
+const scores = {};
+
+function createCardSelector(namePrefix) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "card-select";
+  const valueSelect = document.createElement("select");
+  valueSelect.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join("");
+  const suitSelect = document.createElement("select");
+  suitSelect.innerHTML = suits.map(s => `<option value="${s}">${suitSymbols[s]}</option>`).join("");
+
+  valueSelect.onchange = () => updateCardImage(wrapper, valueSelect.value, suitSelect.value);
+  suitSelect.onchange = () => updateCardImage(wrapper, valueSelect.value, suitSelect.value);
+
+  const img = document.createElement("img");
+  img.className = "card-img";
+  img.src = getCardImage(valueSelect.value, suitSelect.value);
+
+  wrapper.appendChild(valueSelect);
+  wrapper.appendChild(suitSelect);
+  wrapper.appendChild(img);
+  wrapper.getCardCode = () => valueSelect.value + suitSelect.value;
+
+  return wrapper;
+}
+
+function getCardImage(value, suit) {
+  return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${suit}/${value}.png`;
+}
+
+function updateCardImage(wrapper, value, suit) {
+  const img = wrapper.querySelector("img");
+  img.src = getCardImage(value, suit);
+}
+
+function addCommunityCard() {
+  const container = document.getElementById("community-cards");
+  if (container.children.length < maxCommunityCards) {
+    const card = createCardSelector("community");
+    container.appendChild(card);
+  }
+}
+
+function addPlayer() {
+  const container = document.getElementById("players");
+  const div = document.createElement("div");
+  div.className = "player";
+  const name = document.createElement("div");
+  name.className = "player-name";
+  name.contentEditable = true;
+  name.innerText = `Gracz ${++playerCount}`;
+  const card1 = createCardSelector(`p${playerCount}_1`);
+  const card2 = createCardSelector(`p${playerCount}_2`);
+  div.appendChild(name);
+  div.appendChild(card1);
+  div.appendChild(card2);
+  container.appendChild(div);
+}
+
+function getAllCardsFromPlayer(playerDiv) {
+  const selects = playerDiv.querySelectorAll(".card-select");
+  return Array.from(selects).map(s => s.getCardCode());
+}
+
+function getCommunityCards() {
+  const container = document.getElementById("community-cards");
+  return Array.from(container.children).map(c => c.getCardCode());
+}
+
+function rankHand(cards) {
+  // Prosty ranking, można później rozbudować
+  const values = cards.map(c => c.slice(0, -1));
+  const counts = {};
+  for (let v of values) counts[v] = (counts[v] || 0) + 1;
+  const countsSorted = Object.values(counts).sort((a,b) => b-a);
+  if (countsSorted[0] === 4) return 7; // Kareta
+  if (countsSorted[0] === 3 && countsSorted[1] === 2) return 6; // Full
+  if (countsSorted[0] === 3) return 3; // Trójka
+  if (countsSorted[0] === 2 && countsSorted[1] === 2) return 2; // Dwie pary
+  if (countsSorted[0] === 2) return 1; // Para
+  return 0; // Wysoka karta
+}
+
+function checkWinner() {
+  const community = getCommunityCards();
+  if (community.length < 5) {
+    alert("Dodaj 5 kart wspólnych!");
+    return;
+  }
+  const players = document.querySelectorAll(".player");
+  let bestRank = -1;
+  let winners = [];
+
+  players.forEach(player => {
+    const name = player.querySelector(".player-name").innerText;
+    const cards = getAllCardsFromPlayer(player);
+    const fullHand = [...community, ...cards];
+    const rank = rankHand(fullHand);
+    if (rank > bestRank) {
+      bestRank = rank;
+      winners = [name];
+    } else if (rank === bestRank) {
+      winners.push(name);
+    }
+  });
+
+  const result = document.getElementById("result");
+  result.innerText = "Zwycięzca(e): " + winners.join(", ");
+
+  winners.forEach(name => {
+    scores[name] = (scores[name] || 0) + 1;
+  });
+  updateScoreTable();
+}
+
+function updateScoreTable() {
+  const tbody = document.getElementById("score-table");
+  tbody.innerHTML = "";
+  for (let [name, score] of Object.entries(scores)) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${name}</td><td>${score}</td>`;
+    tbody.appendChild(row);
+  }
+}
+
+function resetCards() {
+  document.getElementById("community-cards").innerHTML = "";
+  document.getElementById("players").innerHTML = "";
+  document.getElementById("result").innerText = "";
+  playerCount = 0;
+}
+
+function confirmResetTable() {
+  if (confirm("Na pewno zresetować tabelę wyników?")) {
+    Object.keys(scores).forEach(k => delete scores[k]);
+    updateScoreTable();
+  }
+}
+
+function toggleInstructions() {
+  const section = document.getElementById("instructions");
+  section.style.display = section.style.display === "none" ? "block" : "none";
+}
+</script>
+</body>
+</html>
