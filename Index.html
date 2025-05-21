@@ -1,214 +1,510 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Texas Hold'em</title>
-  <style>
-    body { font-family: Arial; margin: 20px; background: #2e2e2e; color: #fff; }
-    h1, h2 { color: #ffd700; }
-    .card-select { display: inline-block; margin: 5px; }
-    .card-img { height: 60px; vertical-align: middle; }
-    .player { margin-bottom: 10px; background: #444; padding: 10px; border-radius: 8px; }
-    .player-name[contenteditable] { font-weight: bold; color: #00ffff; cursor: text; }
-    #result { margin-top: 20px; font-size: 20px; color: #0f0; }
-    #table { margin-top: 20px; border-collapse: collapse; width: 100%; }
-    #table th, #table td { border: 1px solid #888; padding: 8px; text-align: center; }
-    #instructions { background: #222; padding: 10px; border-radius: 6px; margin-top: 20px; display: none; }
-    select { padding: 5px; font-size: 16px; }
-    button { padding: 8px 16px; font-size: 16px; margin: 10px 5px; border: none; border-radius: 6px; background: #ffd700; color: #000; cursor: pointer; }
-    button:hover { background: #ffea00; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zaawansowany Poker</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+<style>
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: #1a1a1a;
+    color: #eee;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+  }
+  h1,h2 {
+    color: #0ff;
+  }
+  #players-container, #community-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  .player {
+    background: #222;
+    padding: 10px;
+    border-radius: 10px;
+    flex: 1 1 45%;
+    min-width: 280px;
+    box-shadow: 0 2px 8px rgba(0, 170, 255, 0.5);
+    transition: box-shadow 0.3s ease;
+  }
+  .player:hover {
+    box-shadow: 0 4px 16px rgba(0, 170, 255, 0.9);
+  }
+  .card-field {
+    border: 2px solid #0af;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+    width: 50px;
+    height: 70px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: inline-block;
+    margin: 4px;
+    vertical-align: middle;
+    overflow: hidden;
+  }
+  .card-field img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+  }
+  .card-field:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 12px rgba(0, 170, 255, 0.8);
+  }
+  .card-field.winner {
+    animation: pulse-glow 1.5s infinite alternate;
+    border-color: gold;
+    box-shadow: 0 0 10px 3px gold;
+  }
+  @keyframes pulse-glow {
+    from { box-shadow: 0 0 10px 3px gold; }
+    to { box-shadow: 0 0 20px 6px gold; }
+  }
+  #card-picker {
+    position: fixed;
+    background: #222;
+    border: 2px solid #0af;
+    padding: 10px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 600px;
+    max-height: 400px;
+    overflow: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    z-index: 1000;
+  }
+  #card-picker.hidden {
+    display: none;
+  }
+  #card-picker img {
+    width: 40px;
+    height: 56px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  #card-picker img:hover {
+    border-color: #0ff;
+  }
+  button {
+    margin: 15px 5px 30px 0;
+    padding: 8px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+    background: #0af;
+    color: white;
+  }
+  button:hover {
+    background: #08c;
+  }
+  .result {
+    font-size: 20px;
+    margin-top: 20px;
+    padding: 15px;
+    background: #004;
+    border-radius: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+  }
+  th, td {
+    border: 1px solid #444;
+    padding: 6px;
+    text-align: center;
+  }
+  th {
+    background: #0a6;
+  }
+  .remove-btn {
+    margin-left: 10px;
+    background: #d22;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .remove-btn:hover {
+    background: #a00;
+  }
+  .player-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+</style>
 </head>
 <body>
-  <h1>Texas Hold'em Poker</h1>
 
-  <h2>Karty wspólne</h2>
-  <div id="community-cards"></div>
-  <button onclick="addCommunityCard()">+ Dodaj kartę wspólną</button>
+<h1>Zaawansowany Poker</h1>
 
-  <h2>Gracze</h2>
-  <div id="players"></div>
-  <button onclick="addPlayer()">+ Dodaj gracza</button>
-  <button onclick="resetCards()">Resetuj karty</button>
-  <button onclick="checkWinner()">Sprawdź zwycięzcę</button>
-  <h2>Wyniki rozdań</h2>
-  <table id="table">
-    <thead>
-      <tr><th>Gracz</th><th>Zwycięstwa</th></tr>
-    </thead>
-    <tbody id="score-table"></tbody>
-  </table>
-  <button onclick="confirmResetTable()">Resetuj tabelę wyników</button>
+<h2>Karty wspólne (max 5)</h2>
+<div id="community-cards"></div>
+<button onclick="addCommunityCard()">Dodaj kartę wspólną</button>
 
-  <div id="result"></div>
+<h2>Gracze (max 6)</h2>
+<div id="players-container"></div>
+<button onclick="addPlayer()">Dodaj gracza</button>
+<button onclick="resetCards()">Resetuj karty</button>
+<button onclick="resetScores()">Resetuj tabelę wyników</button>
+<button onclick="checkWinner()">Sprawdź zwycięzcę</button>
 
-  <h2 onclick="toggleInstructions()" style="cursor:pointer;">+ Pokaż/Zwiń zasady gry</h2>
-  <div id="instructions">
-    <p><strong>Układy pokerowe (od najlepszego):</strong></p>
-    <ol>
-      <li>Royal Flush (strit do Asa w tym samym kolorze)</li>
-      <li>Strit Flush</li>
-      <li>Kareta</li>
-      <li>Full House</li>
-      <li>Kolor</li>
-      <li>Strit</li>
-      <li>Trójka</li>
-      <li>Dwie pary</li>
-      <li>Para</li>
-      <li>Wysoka karta</li>
-    </ol>
-    <p>Podaj 5 kart wspólnych + 2 karty każdego gracza.<br>
-    Po kliknięciu "Sprawdź zwycięzcę" wyłoniony zostanie najlepszy układ pokerowy.</p>
-  </div>
-  <script>
-let playerCount = 0;
+<div id="result" class="result"></div>
+
+<h2>Podsumowanie wyników</h2>
+<table id="score-table">
+  <thead><tr><th>Gracz</th><th>Wygrane</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<div id="card-picker" class="hidden"></div>
+
+<script>
+const suits = ['h', 'd', 'c', 's'];
+const suitNames = { h: '♥', d: '♦', c: '♣', s: '♠' };
+const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const maxPlayers = 6;
 const maxCommunityCards = 5;
-const suits = ["h", "d", "c", "s"];
-const values = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-const suitSymbols = { h: "♥", d: "♦", c: "♣", s: "♠" };
-const suitColors = { h: "red", d: "red", c: "black", s: "black" };
-const scores = {};
 
-function createCardSelector(namePrefix) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "card-select";
-  const valueSelect = document.createElement("select");
-  valueSelect.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join("");
-  const suitSelect = document.createElement("select");
-  suitSelect.innerHTML = suits.map(s => `<option value="${s}">${suitSymbols[s]}</option>`).join("");
+let players = [];
+let communityCards = [];
+let scoreTable = {};
 
-  valueSelect.onchange = () => updateCardImage(wrapper, valueSelect.value, suitSelect.value);
-  suitSelect.onchange = () => updateCardImage(wrapper, valueSelect.value, suitSelect.value);
+const cardPicker = document.getElementById('card-picker');
+let currentField = null;
 
-  const img = document.createElement("img");
-  img.className = "card-img";
-  img.src = getCardImage(valueSelect.value, suitSelect.value);
-
-  wrapper.appendChild(valueSelect);
-  wrapper.appendChild(suitSelect);
-  wrapper.appendChild(img);
-  wrapper.getCardCode = () => valueSelect.value + suitSelect.value;
-
-  return wrapper;
-}
-
-function getCardImage(value, suit) {
-  return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${suit}/${value}.png`;
-}
-
-function updateCardImage(wrapper, value, suit) {
-  const img = wrapper.querySelector("img");
-  img.src = getCardImage(value, suit);
-}
-
-function addCommunityCard() {
-  const container = document.getElementById("community-cards");
-  if (container.children.length < maxCommunityCards) {
-    const card = createCardSelector("community");
-    container.appendChild(card);
+// Generuj panel wyboru kart – poprawka dla "10"
+function generateCardPicker() {
+  cardPicker.innerHTML = '';
+  for (const s of suits) {
+    for (const v of values) {
+      const img = document.createElement('img');
+      // deckofcardsapi wymaga '0' zamiast '10' jako nazwy pliku
+      let valForSrc = v === '10' ? '0' : v[0];
+      img.src = `https://deckofcardsapi.com/static/img/${valForSrc}${s.toUpperCase()}.png`;
+      img.alt = v + s;
+      img.dataset.value = v;
+      img.dataset.suit = s;
+      img.onclick = () => selectCard(img);
+      cardPicker.appendChild(img);
+    }
   }
 }
+generateCardPicker();
 
+// Otwórz wybór kart dla pola
+function openCardPicker(fieldDiv) {
+  currentField = fieldDiv;
+  cardPicker.classList.remove('hidden');
+}
+
+// Wybierz kartę
+function selectCard(img) {
+  currentField.innerHTML = '';
+  const chosen = document.createElement('img');
+  chosen.src = img.src;
+  chosen.alt = img.alt;
+  chosen.dataset.value = img.dataset.value;
+  chosen.dataset.suit = img.dataset.suit;
+  currentField.appendChild(chosen);
+  cardPicker.classList.add('hidden');
+}
+
+// Zamknij picker klikając poza nim
+document.addEventListener('click', e => {
+  if (!cardPicker.classList.contains('hidden') && !cardPicker.contains(e.target) && !e.target.classList.contains('card-field')) {
+    cardPicker.classList.add('hidden');
+  }
+});
+
+// Tworzy pole karty do kliknięcia
+function createCardField() {
+  const div = document.createElement('div');
+  div.className = 'card-field';
+  div.title = 'Kliknij, aby wybrać kartę';
+  div.onclick = () => openCardPicker(div);
+  return div;
+}
+
+// Dodaj kartę wspólną
+function addCommunityCard() {
+  if (communityCards.length >= maxCommunityCards) return alert('Maksymalnie 5 kart wspólnych.');
+  const container = document.getElementById('community-cards');
+  const cardField = createCardField();
+  container.appendChild(cardField);
+  communityCards.push(cardField);
+}
+
+// Dodaj gracza z 2 kartami i X do usuwania
 function addPlayer() {
-  const container = document.getElementById("players");
-  const div = document.createElement("div");
-  div.className = "player";
-  const name = document.createElement("div");
-  name.className = "player-name";
-  name.contentEditable = true;
-  name.innerText = `Gracz ${++playerCount}`;
-  const card1 = createCardSelector(`p${playerCount}_1`);
-  const card2 = createCardSelector(`p${playerCount}_2`);
-  div.appendChild(name);
-  div.appendChild(card1);
-  div.appendChild(card2);
-  container.appendChild(div);
+  if (players.length >= maxPlayers) return alert('Maksymalnie 6 graczy.');
+  const container = document.getElementById('players-container');
+  const playerDiv = document.createElement('div');
+  playerDiv.className = 'player';
+
+  const headerDiv = document.createElement('div');
+  headerDiv.className = 'player-header';
+
+  const h3 = document.createElement('h3');
+  h3.contentEditable = true;
+  h3.textContent = 'Gracz ' + (players.length + 1);
+
+  // Dodaj przycisk X
+  const removeBtn = document.createElement('button');
+  removeBtn.textContent = 'X';
+  removeBtn.className = 'remove-btn';
+  removeBtn.title = 'Usuń gracza';
+  removeBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (confirm('Czy chcesz usunąć tego gracza?')) {
+      container.removeChild(playerDiv);
+      // Usuń z listy players:
+      players = players.filter(p => p.div !== playerDiv);
+    }
+  };
+
+  headerDiv.appendChild(h3);
+  headerDiv.appendChild(removeBtn);
+
+  playerDiv.appendChild(headerDiv);
+
+  const cardField1 = createCardField();
+  const cardField2 = createCardField();
+  playerDiv.appendChild(cardField1);
+  playerDiv.appendChild(cardField2);
+
+  container.appendChild(playerDiv);
+  players.push({ div: playerDiv, nameElem: h3, cardFields: [cardField1, cardField2] });
 }
 
-function getAllCardsFromPlayer(playerDiv) {
-  const selects = playerDiv.querySelectorAll(".card-select");
-  return Array.from(selects).map(s => s.getCardCode());
+// Reset kart i graczy – poprawka!
+function resetCards() {
+  // Czyść tylko karty i karty wspólne, nie graczy!
+  communityCards = [];
+  document.getElementById('community-cards').innerHTML = '';
+  document.getElementById('result').textContent = '';
+  // Wyczyść karty graczy:
+  players.forEach(p => {
+    p.cardFields.forEach(field => field.innerHTML = '');
+  });
 }
 
-function getCommunityCards() {
-  const container = document.getElementById("community-cards");
-  return Array.from(container.children).map(c => c.getCardCode());
+// Reset tabeli wyników z potwierdzeniem
+function resetScores() {
+  if (!confirm('Czy na pewno chcesz zresetować tabelę wyników?')) return;
+  scoreTable = {};
+  const tbody = document.querySelector('#score-table tbody');
+  tbody.innerHTML = '';
+  alert('Tabela wyników została zresetowana.');
 }
 
-function rankHand(cards) {
-  // Prosty ranking, można później rozbudować
-  const values = cards.map(c => c.slice(0, -1));
+// Parsowanie karty z pola
+function parseCardField(cardField) {
+  const img = cardField.querySelector('img');
+  if (!img) return null;
+  const value = img.dataset.value;
+  const suit = img.dataset.suit;
+  return { value, suit };
+}
+
+function cardValueIndex(card) {
+  return values.indexOf(card.value);
+}
+
+// Funkcje pomocnicze do oceny układów pokerowych
+
+function countByValue(cards) {
   const counts = {};
-  for (let v of values) counts[v] = (counts[v] || 0) + 1;
-  const countsSorted = Object.values(counts).sort((a,b) => b-a);
-  if (countsSorted[0] === 4) return 7; // Kareta
-  if (countsSorted[0] === 3 && countsSorted[1] === 2) return 6; // Full
-  if (countsSorted[0] === 3) return 3; // Trójka
-  if (countsSorted[0] === 2 && countsSorted[1] === 2) return 2; // Dwie pary
-  if (countsSorted[0] === 2) return 1; // Para
-  return 0; // Wysoka karta
+  cards.forEach(card => {
+    counts[card.value] = (counts[card.value] || 0) + 1;
+  });
+  return counts;
+}
+
+function countBySuit(cards) {
+  const counts = {};
+  cards.forEach(card => {
+    counts[card.suit] = (counts[card.suit] || 0) + 1;
+  });
+  return counts;
+}
+
+function getSortedValues(cards) {
+  return cards
+    .map(c => values.indexOf(c.value))
+    .sort((a,b) => b - a);
+}
+
+function isStraight(sortedValues) {
+  let count = 1;
+  for (let i = 0; i < sortedValues.length - 1; i++) {
+    if (sortedValues[i] === sortedValues[i+1] + 1) {
+      count++;
+      if (count >= 5) return true;
+    } else if (sortedValues[i] !== sortedValues[i+1]) {
+      count = 1;
+    }
+  }
+  if (
+    sortedValues.includes(12) && // As
+    sortedValues.includes(3) &&
+    sortedValues.includes(2) &&
+    sortedValues.includes(1) &&
+    sortedValues.includes(0)
+  ) return true;
+  return false;
+}
+
+function getStraightHighCard(sortedValues) {
+  let count = 1;
+  let highCard = sortedValues[0];
+  for (let i = 0; i < sortedValues.length - 1; i++) {
+    if (sortedValues[i] === sortedValues[i+1] + 1) {
+      count++;
+      if (count >= 5) return highCard;
+    } else if (sortedValues[i] !== sortedValues[i+1]) {
+      count = 1;
+      highCard = sortedValues[i+1];
+    }
+  }
+  if (
+    sortedValues.includes(12) && // As
+    sortedValues.includes(3) &&
+    sortedValues.includes(2) &&
+    sortedValues.includes(1) &&
+    sortedValues.includes(0)
+  ) return 3;
+  return null;
+}
+
+function isFlush(countsBySuit) {
+  return Object.values(countsBySuit).some(count => count >= 5);
+}
+
+function getFlushSuit(countsBySuit) {
+  for (const suit in countsBySuit) {
+    if (countsBySuit[suit] >= 5) return suit;
+  }
+  return null;
+}
+
+function getCardsOfSuit(cards, suit) {
+  return cards.filter(c => c.suit === suit);
+}
+
+function evaluateHand(cards) {
+  const sortedValues = getSortedValues(cards);
+  const countsByValue = countByValue(cards);
+  const countsBySuit = countBySuit(cards);
+
+  const flushSuit = getFlushSuit(countsBySuit);
+  let flushCards = [];
+  if (flushSuit) {
+    flushCards = getCardsOfSuit(cards, flushSuit);
+  }
+
+  const is_flush = flushSuit !== null;
+  const straightHighCard = getStraightHighCard(sortedValues);
+
+  let is_straight = isStraight(sortedValues);
+
+  if (is_flush && straightHighCard === 12) {
+    return { rank: 10, name: 'Poker Królewski', highCard: { value: 'A', suit: flushSuit } };
+  }
+
+  if (is_flush && is_straight) {
+    return { rank: 9, name: 'Poker', highCard: { value: values[straightHighCard], suit: flushSuit } };
+  }
+
+  for (const val in countsByValue) {
+    if (countsByValue[val] === 4) {
+      return { rank: 8, name: 'Kareta', highCard: { value: val, suit: null } };
+    }
+  }
+
+  let threeVal = null;
+  let pairVal = null;
+  for (const val in countsByValue) {
+    if (countsByValue[val] === 3) {
+      if (!threeVal || values.indexOf(val) > values.indexOf(threeVal)) {
+        threeVal = val;
+      }
+    }
+  }
+  for (const val in countsByValue) {
+    if (countsByValue[val] >= 2 && val !== threeVal) {
+      if (!pairVal || values.indexOf(val) > values.indexOf(pairVal)) {
+        pairVal = val;
+      }
+    }
+  }
+  if (threeVal && pairVal) {
+    return { rank: 7, name: 'Full', highCard: { value: threeVal, suit: null } };
+  }
+
+  if (is_flush) {
+    const flushSorted = flushCards
+      .map(c => values.indexOf(c.value))
+      .sort((a,b) => b-a);
+    return { rank: 6, name: 'Kolor', highCard: { value: values[flushSorted[0]], suit: flushSuit } };
+  }
+
+  if (is_straight) {
+    return { rank: 5, name: 'Strit', highCard: { value: values[straightHighCard], suit: null } };
+  }
+
+  for (const val in countsByValue) {
+    if (countsByValue[val] === 3) {
+      return { rank: 4, name: 'Trójka', highCard: { value: val, suit: null } };
+    }
+  }
+
+  const pairs = Object.keys(countsByValue).filter(val => countsByValue[val] === 2)
+    .sort((a,b) => values.indexOf(b) - values.indexOf(a));
+  if (pairs.length >= 2) {
+    return { rank: 3, name: 'Dwie pary', highCard: { value: pairs[0], suit: null } };
+  }
+
+  if (pairs.length === 1) {
+    return { rank: 2, name: 'Para', highCard: { value: pairs[0], suit: null } };
+  }
+
+  return { rank: 1, name: 'Najwyższa karta', highCard: { value: values[sortedValues[0]], suit: null } };
 }
 
 function checkWinner() {
-  const community = getCommunityCards();
-  if (community.length < 5) {
-    alert("Dodaj 5 kart wspólnych!");
+  const comCards = communityCards.map(parseCardField).filter(c => c !== null);
+  if (comCards.length < 3) {
+    alert('Dodaj co najmniej 3 karty wspólne.');
     return;
   }
-  const players = document.querySelectorAll(".player");
-  let bestRank = -1;
-  let winners = [];
 
-  players.forEach(player => {
-    const name = player.querySelector(".player-name").innerText;
-    const cards = getAllCardsFromPlayer(player);
-    const fullHand = [...community, ...cards];
-    const rank = rankHand(fullHand);
-    if (rank > bestRank) {
-      bestRank = rank;
-      winners = [name];
-    } else if (rank === bestRank) {
-      winners.push(name);
-    }
+  const results = [];
+  players.forEach(p => {
+    const c1 = parseCardField(p.cardFields[0]);
+    const c2 = parseCardField(p.cardFields[1]);
+    if (!c1 || !c2) return;
+    const cards = [c1, c2, ...comCards];
+    const evaluation = evaluateHand(cards);
+    results.push({ player: p.nameElem.textContent, rank: evaluation.rank, name: evaluation.name, highCard: evaluation.highCard });
   });
 
-  const result = document.getElementById("result");
-  result.innerText = "Zwycięzca(e): " + winners.join(", ");
-
-  winners.forEach(name => {
-    scores[name] = (scores[name] || 0) + 1;
-  });
-  updateScoreTable();
-}
-
-function updateScoreTable() {
-  const tbody = document.getElementById("score-table");
-  tbody.innerHTML = "";
-  for (let [name, score] of Object.entries(scores)) {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${name}</td><td>${score}</td>`;
-    tbody.appendChild(row);
-  }
-}
-
-function resetCards() {
-  document.getElementById("community-cards").innerHTML = "";
-  document.getElementById("players").innerHTML = "";
-  document.getElementById("result").innerText = "";
-  playerCount = 0;
-}
-
-function confirmResetTable() {
-  if (confirm("Na pewno zresetować tabelę wyników?")) {
-    Object.keys(scores).forEach(k => delete scores[k]);
-    updateScoreTable();
-  }
-}
-
-function toggleInstructions() {
-  const section = document.getElementById("instructions");
-  section.style.display = section.style.display === "none" ? "block" : "none";
-}
-</script>
-</body>
-</html>
+  if (results.length === 0) {
+    alert
