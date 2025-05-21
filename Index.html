@@ -6,151 +6,28 @@
 <title>Zaawansowany Poker</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
 <style>
-  body {
-    font-family: 'Montserrat', sans-serif;
-    background: #1a1a1a;
-    color: #eee;
-    max-width: 900px;
-    margin: auto;
-    padding: 20px;
-  }
-  h1,h2 {
-    color: #0ff;
-  }
-  #players-container, #community-cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 30px;
-  }
-  .player {
-    background: #222;
-    padding: 10px;
-    border-radius: 10px;
-    flex: 1 1 45%;
-    min-width: 280px;
-    box-shadow: 0 2px 8px rgba(0, 170, 255, 0.5);
-    transition: box-shadow 0.3s ease;
-  }
-  .player:hover {
-    box-shadow: 0 4px 16px rgba(0, 170, 255, 0.9);
-  }
-  .card-field {
-    border: 2px solid #0af;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.6);
-    width: 50px;
-    height: 70px;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    display: inline-block;
-    margin: 4px;
-    vertical-align: middle;
-    overflow: hidden;
-    background: #191c24;
-  }
-  .card-field img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    user-select: none;
-    pointer-events: none;
-  }
-  .card-field:hover {
-    transform: scale(1.1);
-    box-shadow: 0 8px 12px rgba(0, 170, 255, 0.8);
-  }
-  .card-field.winner {
-    animation: pulse-glow 1.5s infinite alternate;
-    border-color: gold;
-    box-shadow: 0 0 10px 3px gold;
-  }
-  @keyframes pulse-glow {
-    from { box-shadow: 0 0 10px 3px gold; }
-    to { box-shadow: 0 0 20px 6px gold; }
-  }
-  #card-picker {
-    position: fixed;
-    background: #222;
-    border: 2px solid #0af;
-    padding: 10px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 600px;
-    max-height: 400px;
-    overflow: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    z-index: 1000;
-  }
-  #card-picker.hidden {
-    display: none;
-  }
-  #card-picker img {
-    width: 40px;
-    height: 56px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    background: #191c24;
-  }
-  #card-picker img:hover {
-    border-color: #0ff;
-  }
-  button {
-    margin: 15px 5px 30px 0;
-    padding: 8px 16px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 6px;
-    border: none;
-    background: #0af;
-    color: white;
-  }
-  button:hover {
-    background: #08c;
-  }
-  .result {
-    font-size: 20px;
-    margin-top: 20px;
-    padding: 15px;
-    background: #004;
-    border-radius: 10px;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 25px;
-  }
-  th, td {
-    border: 1px solid #444;
-    padding: 6px;
-    text-align: center;
-  }
-  th {
-    background: #0a6;
-  }
-  .remove-btn {
-    margin-left: 10px;
-    background: #d22;
-    color: white;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-    padding: 3px 8px;
-    font-size: 16px;
-    line-height: 1;
-  }
-  .remove-btn:hover {
-    background: #a00;
-  }
-  .player-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-  }
+  body { font-family: 'Montserrat', sans-serif; background: #1a1a1a; color: #eee; max-width: 900px; margin: auto; padding: 20px; }
+  h1,h2 { color: #0ff; }
+  #players-container, #community-cards { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
+  .player { background: #222; padding: 10px; border-radius: 10px; flex: 1 1 45%; min-width: 280px; box-shadow: 0 2px 8px rgba(0, 170, 255, 0.5); transition: box-shadow 0.3s ease; position: relative; }
+  .player:hover { box-shadow: 0 4px 16px rgba(0, 170, 255, 0.9); }
+  .remove-player { position: absolute; right: 12px; top: 10px; color: #f44; background: none; border: none; font-size: 20px; cursor: pointer; font-weight: bold; z-index: 2; }
+  .remove-player:hover { color: #ff6666; }
+  .card-field { border: 2px solid #0af; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.6); width: 50px; height: 70px; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display: inline-block; margin: 4px; vertical-align: middle; overflow: hidden; }
+  .card-field img { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
+  .card-field:hover { transform: scale(1.1); box-shadow: 0 8px 12px rgba(0, 170, 255, 0.8); }
+  .card-field.winner { animation: pulse-glow 1.5s infinite alternate; border-color: gold; box-shadow: 0 0 10px 3px gold; }
+  @keyframes pulse-glow { from { box-shadow: 0 0 10px 3px gold; } to { box-shadow: 0 0 20px 6px gold; } }
+  #card-picker { position: fixed; background: #222; border: 2px solid #0af; padding: 10px; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 600px; max-height: 400px; overflow: auto; display: flex; flex-wrap: wrap; gap: 5px; z-index: 1000; }
+  #card-picker.hidden { display: none; }
+  #card-picker img { width: 40px; height: 56px; cursor: pointer; border: 1px solid transparent; }
+  #card-picker img:hover { border-color: #0ff; }
+  button { margin: 15px 5px 30px 0; padding: 8px 16px; font-size: 16px; cursor: pointer; border-radius: 6px; border: none; background: #0af; color: white; }
+  button:hover { background: #08c; }
+  .result { font-size: 20px; margin-top: 20px; padding: 15px; background: #004; border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+  th, td { border: 1px solid #444; padding: 6px; text-align: center; }
+  th { background: #0a6; }
 </style>
 </head>
 <body>
@@ -192,15 +69,12 @@ let scoreTable = {};
 const cardPicker = document.getElementById('card-picker');
 let currentField = null;
 
-// Generuj panel wyboru kart – poprawka dla "10"
 function generateCardPicker() {
   cardPicker.innerHTML = '';
   for (const s of suits) {
     for (const v of values) {
       const img = document.createElement('img');
-      // deckofcardsapi wymaga '0' zamiast '10' jako nazwy pliku
-      let valForSrc = v === '10' ? '0' : v[0];
-      img.src = `https://deckofcardsapi.com/static/img/${valForSrc}${s.toUpperCase()}.png`;
+      img.src = `https://deckofcardsapi.com/static/img/${v[0]}${s.toUpperCase()}.png`;
       img.alt = v + s;
       img.dataset.value = v;
       img.dataset.suit = s;
@@ -211,13 +85,10 @@ function generateCardPicker() {
 }
 generateCardPicker();
 
-// Otwórz wybór kart dla pola
 function openCardPicker(fieldDiv) {
   currentField = fieldDiv;
   cardPicker.classList.remove('hidden');
 }
-
-// Wybierz kartę
 function selectCard(img) {
   currentField.innerHTML = '';
   const chosen = document.createElement('img');
@@ -228,15 +99,11 @@ function selectCard(img) {
   currentField.appendChild(chosen);
   cardPicker.classList.add('hidden');
 }
-
-// Zamknij picker klikając poza nim
 document.addEventListener('click', e => {
   if (!cardPicker.classList.contains('hidden') && !cardPicker.contains(e.target) && !e.target.classList.contains('card-field')) {
     cardPicker.classList.add('hidden');
   }
 });
-
-// Tworzy pole karty do kliknięcia
 function createCardField() {
   const div = document.createElement('div');
   div.className = 'card-field';
@@ -244,8 +111,6 @@ function createCardField() {
   div.onclick = () => openCardPicker(div);
   return div;
 }
-
-// Dodaj kartę wspólną
 function addCommunityCard() {
   if (communityCards.length >= maxCommunityCards) return alert('Maksymalnie 5 kart wspólnych.');
   const container = document.getElementById('community-cards');
@@ -253,38 +118,30 @@ function addCommunityCard() {
   container.appendChild(cardField);
   communityCards.push(cardField);
 }
-
-// Dodaj gracza z 2 kartami i X do usuwania
 function addPlayer() {
   if (players.length >= maxPlayers) return alert('Maksymalnie 6 graczy.');
   const container = document.getElementById('players-container');
   const playerDiv = document.createElement('div');
   playerDiv.className = 'player';
 
-  const headerDiv = document.createElement('div');
-  headerDiv.className = 'player-header';
-
   const h3 = document.createElement('h3');
   h3.contentEditable = true;
   h3.textContent = 'Gracz ' + (players.length + 1);
+  playerDiv.appendChild(h3);
 
-  // Dodaj przycisk X
+  // Przycisk usuwania gracza
   const removeBtn = document.createElement('button');
-  removeBtn.textContent = 'X';
-  removeBtn.className = 'remove-btn';
+  removeBtn.className = 'remove-player';
+  removeBtn.innerHTML = '×';
   removeBtn.title = 'Usuń gracza';
   removeBtn.onclick = (e) => {
     e.stopPropagation();
-    if (confirm('Czy chcesz usunąć tego gracza?')) {
+    if (confirm('Czy na pewno chcesz usunąć tego gracza?')) {
       container.removeChild(playerDiv);
       players = players.filter(p => p.div !== playerDiv);
     }
   };
-
-  headerDiv.appendChild(h3);
-  headerDiv.appendChild(removeBtn);
-
-  playerDiv.appendChild(headerDiv);
+  playerDiv.appendChild(removeBtn);
 
   const cardField1 = createCardField();
   const cardField2 = createCardField();
@@ -294,18 +151,15 @@ function addPlayer() {
   container.appendChild(playerDiv);
   players.push({ div: playerDiv, nameElem: h3, cardFields: [cardField1, cardField2] });
 }
-
-// Reset kart i graczy – poprawka!
+// Resetuje TYLKO karty, nie graczy
 function resetCards() {
   communityCards = [];
   document.getElementById('community-cards').innerHTML = '';
-  document.getElementById('result').textContent = '';
-  players.forEach(p => {
-    p.cardFields.forEach(field => field.innerHTML = '');
+  players.forEach(player => {
+    player.cardFields.forEach(field => field.innerHTML = '');
   });
+  document.getElementById('result').textContent = '';
 }
-
-// Reset tabeli wyników z potwierdzeniem
 function resetScores() {
   if (!confirm('Czy na pewno chcesz zresetować tabelę wyników?')) return;
   scoreTable = {};
@@ -313,8 +167,6 @@ function resetScores() {
   tbody.innerHTML = '';
   alert('Tabela wyników została zresetowana.');
 }
-
-// Parsowanie karty z pola
 function parseCardField(cardField) {
   const img = cardField.querySelector('img');
   if (!img) return null;
@@ -322,35 +174,22 @@ function parseCardField(cardField) {
   const suit = img.dataset.suit;
   return { value, suit };
 }
-
-function cardValueIndex(card) {
-  return values.indexOf(card.value);
-}
-
-// Funkcje pomocnicze do oceny układów pokerowych
-
+function cardValueIndex(card) { return values.indexOf(card.value); }
 function countByValue(cards) {
   const counts = {};
-  cards.forEach(card => {
-    counts[card.value] = (counts[card.value] || 0) + 1;
-  });
+  cards.forEach(card => { counts[card.value] = (counts[card.value] || 0) + 1; });
   return counts;
 }
-
 function countBySuit(cards) {
   const counts = {};
-  cards.forEach(card => {
-    counts[card.suit] = (counts[card.suit] || 0) + 1;
-  });
+  cards.forEach(card => { counts[card.suit] = (counts[card.suit] || 0) + 1; });
   return counts;
 }
-
 function getSortedValues(cards) {
   return cards
     .map(c => values.indexOf(c.value))
     .sort((a,b) => b - a);
 }
-
 function isStraight(sortedValues) {
   let count = 1;
   for (let i = 0; i < sortedValues.length - 1; i++) {
@@ -361,16 +200,9 @@ function isStraight(sortedValues) {
       count = 1;
     }
   }
-  if (
-    sortedValues.includes(12) &&
-    sortedValues.includes(3) &&
-    sortedValues.includes(2) &&
-    sortedValues.includes(1) &&
-    sortedValues.includes(0)
-  ) return true;
+  if (sortedValues.includes(12) && sortedValues.includes(3) && sortedValues.includes(2) && sortedValues.includes(1) && sortedValues.includes(0)) return true;
   return false;
 }
-
 function getStraightHighCard(sortedValues) {
   let count = 1;
   let highCard = sortedValues[0];
@@ -383,31 +215,21 @@ function getStraightHighCard(sortedValues) {
       highCard = sortedValues[i+1];
     }
   }
-  if (
-    sortedValues.includes(12) &&
-    sortedValues.includes(3) &&
-    sortedValues.includes(2) &&
-    sortedValues.includes(1) &&
-    sortedValues.includes(0)
-  ) return 3;
+  if (sortedValues.includes(12) && sortedValues.includes(3) && sortedValues.includes(2) && sortedValues.includes(1) && sortedValues.includes(0)) return 3;
   return null;
 }
-
 function isFlush(countsBySuit) {
   return Object.values(countsBySuit).some(count => count >= 5);
 }
-
 function getFlushSuit(countsBySuit) {
   for (const suit in countsBySuit) {
     if (countsBySuit[suit] >= 5) return suit;
   }
   return null;
 }
-
 function getCardsOfSuit(cards, suit) {
   return cards.filter(c => c.suit === suit);
 }
-
 function evaluateHand(cards) {
   const sortedValues = getSortedValues(cards);
   const countsByValue = countByValue(cards);
@@ -415,9 +237,7 @@ function evaluateHand(cards) {
 
   const flushSuit = getFlushSuit(countsBySuit);
   let flushCards = [];
-  if (flushSuit) {
-    flushCards = getCardsOfSuit(cards, flushSuit);
-  }
+  if (flushSuit) flushCards = getCardsOfSuit(cards, flushSuit);
 
   const is_flush = flushSuit !== null;
   const straightHighCard = getStraightHighCard(sortedValues);
@@ -487,7 +307,6 @@ function evaluateHand(cards) {
 
   return { rank: 1, name: 'Najwyższa karta', highCard: { value: values[sortedValues[0]], suit: null } };
 }
-
 function checkWinner() {
   const comCards = communityCards.map(parseCardField).filter(c => c !== null);
   if (comCards.length < 3) {
@@ -522,7 +341,6 @@ function checkWinner() {
   highlightWinningCards(win.player);
   updateScore(win.player);
 }
-
 function updateScore(winner) {
   if (!scoreTable[winner]) scoreTable[winner] = 0;
   scoreTable[winner]++;
@@ -539,22 +357,16 @@ function updateScore(winner) {
     tbody.appendChild(tr);
   }
 }
-
-// Podświetlenie kart zwycięzcy
 function highlightWinningCards(winningPlayerName) {
   document.querySelectorAll('.card-field.winner').forEach(el => el.classList.remove('winner'));
   const player = players.find(p => p.nameElem.textContent === winningPlayerName);
   if (!player) return;
   player.cardFields.forEach(cardField => cardField.classList.add('winner'));
 }
-
-// Startowa inicjalizacja
-window.onload = () => {
-  resetCards();
-  addCommunityCard(); addCommunityCard(); addCommunityCard();
-  addPlayer(); addPlayer();
-};
+// Start
+resetCards();
+addCommunityCard(); addCommunityCard(); addCommunityCard();
+addPlayer(); addPlayer();
 </script>
-
 </body>
 </html>
