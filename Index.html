@@ -47,6 +47,7 @@
     margin: 4px;
     vertical-align: middle;
     overflow: hidden;
+    background: #191c24;
   }
   .card-field img {
     width: 100%;
@@ -92,6 +93,7 @@
     height: 56px;
     cursor: pointer;
     border: 1px solid transparent;
+    background: #191c24;
   }
   #card-picker img:hover {
     border-color: #0ff;
@@ -275,7 +277,6 @@ function addPlayer() {
     e.stopPropagation();
     if (confirm('Czy chcesz usunąć tego gracza?')) {
       container.removeChild(playerDiv);
-      // Usuń z listy players:
       players = players.filter(p => p.div !== playerDiv);
     }
   };
@@ -296,11 +297,9 @@ function addPlayer() {
 
 // Reset kart i graczy – poprawka!
 function resetCards() {
-  // Czyść tylko karty i karty wspólne, nie graczy!
   communityCards = [];
   document.getElementById('community-cards').innerHTML = '';
   document.getElementById('result').textContent = '';
-  // Wyczyść karty graczy:
   players.forEach(p => {
     p.cardFields.forEach(field => field.innerHTML = '');
   });
@@ -363,7 +362,7 @@ function isStraight(sortedValues) {
     }
   }
   if (
-    sortedValues.includes(12) && // As
+    sortedValues.includes(12) &&
     sortedValues.includes(3) &&
     sortedValues.includes(2) &&
     sortedValues.includes(1) &&
@@ -385,7 +384,7 @@ function getStraightHighCard(sortedValues) {
     }
   }
   if (
-    sortedValues.includes(12) && // As
+    sortedValues.includes(12) &&
     sortedValues.includes(3) &&
     sortedValues.includes(2) &&
     sortedValues.includes(1) &&
@@ -507,4 +506,55 @@ function checkWinner() {
   });
 
   if (results.length === 0) {
-    alert
+    alert('Dodaj karty dla co najmniej jednego gracza.');
+    return;
+  }
+
+  results.sort((a,b) => {
+    if(b.rank !== a.rank) return b.rank - a.rank;
+    return values.indexOf(b.highCard.value) - values.indexOf(a.highCard.value);
+  });
+
+  const win = results[0];
+  const resDiv = document.getElementById('result');
+  resDiv.innerHTML = `<strong>Zwycięzca:</strong> ${win.player} — ${win.name} (karta: ${win.highCard.value}${suitNames[win.highCard.suit] || ''})`;
+
+  highlightWinningCards(win.player);
+  updateScore(win.player);
+}
+
+function updateScore(winner) {
+  if (!scoreTable[winner]) scoreTable[winner] = 0;
+  scoreTable[winner]++;
+  const tbody = document.querySelector('#score-table tbody');
+  tbody.innerHTML = '';
+  for (const player in scoreTable) {
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td');
+    tdName.textContent = player;
+    const tdWins = document.createElement('td');
+    tdWins.textContent = scoreTable[player];
+    tr.appendChild(tdName);
+    tr.appendChild(tdWins);
+    tbody.appendChild(tr);
+  }
+}
+
+// Podświetlenie kart zwycięzcy
+function highlightWinningCards(winningPlayerName) {
+  document.querySelectorAll('.card-field.winner').forEach(el => el.classList.remove('winner'));
+  const player = players.find(p => p.nameElem.textContent === winningPlayerName);
+  if (!player) return;
+  player.cardFields.forEach(cardField => cardField.classList.add('winner'));
+}
+
+// Startowa inicjalizacja
+window.onload = () => {
+  resetCards();
+  addCommunityCard(); addCommunityCard(); addCommunityCard();
+  addPlayer(); addPlayer();
+};
+</script>
+
+</body>
+</html>
